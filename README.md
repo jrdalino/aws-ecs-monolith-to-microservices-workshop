@@ -265,7 +265,7 @@ Let's deploy the monolith as a service onto the cluster.
 - Target group name = select your group: api.
 8. Select Save.
 9. Select Create Service.
-10. Select View Service
+10. Select View Service.
 
 ### 2.7 Test your Monolith
 Validate your deployment by checking if the service is available from the internet and pinging it.
