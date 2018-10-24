@@ -148,59 +148,161 @@ $(aws ecr get-login --no-include-email --region ap-southeast-1)
 
 2. You're going to get a massive output starting with docker login -u AWS -p ... Copy this entire output, paste, and run it in the terminal.
 ```
-docker login -u AWS -p eyJwY...
-...
-...
-...
-...5NzI2fQ== https://505265941169.dkr.ecr.ap-southeast-1.amazonaws.com
+docker login -u AWS -p eyJwY...== https://505265941169.dkr.ecr.ap-southeast-1.amazonaws.com
 ```
 
-3. You should see Login Succeeded.
-```
-Login Succeeded
-```
+You should see Login Succeeded.
 
-Build the Image: In the terminal, run docker build -t api . NOTE, the . is important here.
+4. Build the Image: In the terminal, run docker build -t api . NOTE, the . is important here.
 ```
 docker build -t api .
 ```
 
-Tag the Image: After the build completes, tag the image so you can push it to the repository: docker tag api:latest [account-id].dkr.ecr.[region].amazonaws.com/api:latest
+5. Tag the Image: After the build completes, tag the image so you can push it to the repository: docker tag api:latest [account-id].dkr.ecr.[region].amazonaws.com/api:latest
 ```
 docker tag api:latest 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/api:latest
 ```
 
-Push the image to ECR: Run docker push to push your image to ECR: 
+6. Push the image to ECR: Run docker push to push your image to ECR: 
 docker push [account-id].dkr.ecr.[region].amazonaws.com/api:latest
 ```
 docker push 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/api:latest
 ```
 
 ## Part 2: Deploy the Monolith
-- 2.1 Launch an ECS Cluster using AWS CloudFormation
-- 2.2 Check your Cluster is Running
-- 2.3 Write a Task Definition
-- 2.4 Configure the Application Load Balancer: Target Group
-- 2.5 Configure the Application Load Balancer: Listener
-- 2.6 Deploy the Monolith as a Service
-- 2.7 Test your Monolith
+###  2.1 Launch an ECS Cluster using AWS CloudFormation
+First, you will create a an Amazon ECS cluster, deployed behind an Application Load Balancer.
+
+1. Navigate to the AWS CloudFormation console.
+2. Select Create Stack.
+3. Select 'Upload a template to Amazon S3' and choose the ecs.yml file from the GitHub project at amazon-ecs-nodejs-microservice/2-containerized/infrastructure/ecs.yml Select Next.
+4. For stack name, enter BreakTheMonolith-Demo. Keep the other parameter values the same:
+- Desired Capacity = 2
+- InstanceType = t2.micro
+- MaxSize = 2
+5. Select Next.
+6. It is not necessary to modify any options on this page. Select Next.
+7. Check the box at the bottom of the next page and select Create. You will see your stack with the orange CREATE_IN_PROGRESS. You can select the refresh button at the top right of the screen to check on the progress. This process typically takes under 5 minutes.
+
+OR
+
+You can also use the AWS CLI to deploy AWS CloudFormation Stacks. Just add in your region to this code and run in the terminal from the folder amazon-ecs-nodejs-microservices/3-microservices on your computer.
+
+```
+$ aws cloudformation deploy \
+   --template-file infrastructure/ecs.yml \
+   --region <region> \
+   --stack-name Nodejs-Microservices \
+   --capabilities CAPABILITY_NAMED_IAM
+```
+
+### 2.2 Check your Cluster is Running
+- Navigate to the Amazon ECS console. Your cluster should appear in the list.
+- Clicking into the cluster, select the 'Tasks' tab, no tasks will be running. 
+- Select the 'ECS Instances' tab, you will see the two EC2 Instances the AWS CloudFormation template created.
+
+### 2.3 Write a Task Definition
+The task definition tells Amazon ECS how to deploy your application containers across the cluster.
+1. Navigate to the 'Task Definitions' menu on the left side of the Amazon ECS console.
+2. Select Create new Task Definition.
+3. Task Definition Name = api.
+4. Select Add Container.
+5. Specify the following parameters.
+- If a parameter is not defined, leave it blank or with the default settings: Container name = api image = [account-id].dkr.ecr.[region].amazonaws.com/api:v1 (this is the URL of your ECR repository image from the previous step).
+- Be sure the tag :v1 matches the value you used in module 1 to tag and push the image. Memory = Hard limit: 256 Port mappings = Host port:0, Container port:3000 CPU units = 256
+6. Select Add.
+7. Select Create.
+8. Your Task Definition will now show up in the console.
+
+### 2.4 Configure the Application Load Balancer: Target Group
+The Application Load Balancer (ALB) lets your service accept incoming traffic. The ALB automatically routes traffic to container instances running on your cluster using them as a target group.
+
+Check your VPC Name: If this is not your first time using this AWS account, you may have multiple VPCs. It is important to configure your Target Group with the correct VPC.
+
+- Navigate to the Load Balancer section of the EC2 Console.
+- You should see a Load Balancer already exists named demo.
+- Select the checkbox to see the Load Balancer details.
+- Note the value for the VPC attribute on the details page.
+
+Configure the ALB Target Group
+
+1. Navigate to the Target Group section of the EC2 Console.
+2. Select Create target group.
+3. Configure the Target Group (do not modify defaults if they are not specified here): 
+- Name = api 
+- Protocol = HTTP 
+- Port = 80 
+- VPC = select the VPC that matches your Load Balancer from the previous step. This is most likely NOT your default VPC. 
+- Advanced health check settings: Healthy threshold = 2 Unhealthy threshold = 2 Timeout = 5 Interval = 6.
+4. Select Create.
+
+### 2.5 Configure the Application Load Balancer: Listener
+The listener checks for incoming connection requests to your ALB.
+
+Add a Listener to the ALB
+
+1. Navigate to the Load Balancer section of the EC2 Console.
+2. You should see a Load Balancer already exists named demo.
+3. Select the checkbox to see the Load Balancer details.
+4. Select the Listeners tab.
+5. Select Create Listener:
+- Protocol = HTTP
+- Port = 80
+- Default target group = api
+6. Click Create.
+
+### 2.6 Deploy the Monolith as a Service
+Now, you will deploy the monolith as a service onto the cluster.
+
+1. Navigate to the 'Clusters' menu on the left side of the Amazon ECS console.
+2. Select your cluster: BreakTheMonolith-Demo-ECSCluster.
+3. Under the services tab, select Create.
+4. Configure the service (do not modify any default values): Service name = api Number of tasks = 1
+5. Select Configure ELB:
+- ELB Type = Application Load Balancer.
+- For IAM role, select BreakTheMonolith-Demo-ECSServiceRole.
+- Select your Load Balancer ELB name = demo.
+- Select Add to ELB.
+6. Add your service to the target group:
+- Listener port = 80:HTTP
+- Target group name = select your group: api.
+7. Select Save.
+8. Select Create Service.
+9. Select View Service
+
+### 2.7 Test your Monolith
+Validate your deployment by checking if the service is available from the internet and pinging it.
+
+To Find your Service URL:
+
+Navigate to the Load Balancers section of the EC2 Console.
+Select your load balancer demo.
+Copy and paste the value for DNS name into your browser.
+You should see a message 'Ready to receive requests'.
+
+See Each Part of the Service: The node.js application routes traffic to each worker based on the URL. To see a worker, simply add the worker name api/[worker-name] to the end of your DNS Name like this:
+
+http://[DNS name]/api/users
+http://[DNS name]/api/threads
+http://[DNS name]/api/posts
+You can also add a record number at the end of the URL to drill down to a particular record. Like this: http://[DNS name]/api/posts/1 or http://[DNS name]/api/users/2
 
 ## Part 3: Break the Monolith
-- 3.1 Provision the ECR Repositories
-- 3.2 Authenticate Docker with AWS (optional)
-- 3.3 Build and Push Images for Each Service
+### 3.1 Provision the ECR Repositories
+### 3.2 Authenticate Docker with AWS (optional)
+### 3.3 Build and Push Images for Each Service
 
 ## Part 4: Deploy Microservices
-- 4.1 Write Task Definitions for your Services
-- 4.2 Configure the Application Load Balancer: Target Groups
-- 4.3 Configure Listernet Rules
-- 4.4 Deploy your Microservices
-- 4.5 Switch Over Traffic to your Microservices
-- 4.5 Validate you Deployment
+### 4.1 Write Task Definitions for your Services
+### 4.2 Configure the Application Load Balancer: Target Groups
+### 4.3 Configure Listernet Rules
+### 4.4 Deploy your Microservices
+### 4.5 Switch Over Traffic to your Microservices
+### 4.5 Validate you Deployment
 
 ## Part 5: Clean Up
-- 5.1 Turn of Services
-- 5.2 Delete Listerners
-- 5.3 Delete Target Groups
-- 5.4 Rollback your CloudFormation Stack
-- 5.5 Deregister Amazon ECR Repositories
+### 5.1 Turn of Services
+### 5.2 Delete Listerners
+### 5.3 Delete Target Groups
+### 5.4 Rollback your CloudFormation Stack
+### 5.5 Deregister Amazon ECR Repositories
