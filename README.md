@@ -7,18 +7,6 @@ We will start out by running a monolith ECS and then we will deploy new microser
 side by side with the Monolith and finally we will divert traffic to the microservices
 with zero downtime.
 
-To start what is a monolith vs microservices and why do we want to migrate from one to another?
-
-Choosing monolith vs micrse
-
-Many companies go through this process, they realize
-
-Shift must be handled carefully specially
-
-To demonstrate.. let's look
-
-small Rest API for a forum
-
 Let's take a look at our server.js file
 
 ```js
