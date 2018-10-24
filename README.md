@@ -1,11 +1,104 @@
 # Break a Monolith Application into Microservices with Amazon Elastic Container Service, Docker, and Amazon EC2
 
+In this demo, I will show you how to use Elastic Container Services to break
+a monolithic application into micro services.
+
+We will start out by running a monolith ECS and then we will deploy new microservices
+side by side with the Monolith and finally we will divert traffic to the microservices
+with zero downtime.
+
+To start what is a monolith vs microservices and why do we want to migrate from one to another?
+
+Choosing monolith vs micrse
+
+Many companies go through this process, they realize
+
+Shift must be handled carefully specially
+
+To demonstrate.. let's look
+
+small Rest API for a forum
+
+Let's take a look at our server.js file
+
+```js
+const app = require('koa')();
+const router = require('koa-router')();
+const db = require('./db.json');
+
+// Log requests
+app.use(function *(next){
+  const start = new Date;
+  yield next;
+  const ms = new Date - start;
+  console.log('%s %s - %s', this.method, this.url, ms);
+});
+
+router.get('/api/users', function *(next) {
+  this.body = db.users;
+});
+
+router.get('/api/users/:userId', function *(next) {
+  const id = parseInt(this.params.userId);
+  this.body = db.users.find((user) => user.id == id);
+});
+
+router.get('/api/threads', function *() {
+  this.body = db.threads;
+});
+
+router.get('/api/threads/:threadId', function *() {
+  const id = parseInt(this.params.threadId);
+  this.body = db.threads.find((thread) => thread.id == id);
+});
+
+router.get('/api/posts/in-thread/:threadId', function *() {
+  const id = parseInt(this.params.threadId);
+  this.body = db.posts.filter((post) => post.thread == id);
+});
+
+router.get('/api/posts/by-user/:userId', function *() {
+  const id = parseInt(this.params.userId);
+  this.body = db.posts.filter((post) => post.user == id);
+});
+
+router.get('/api/', function *() {
+  this.body = "API ready to receive requests";
+});
+
+router.get('/', function *() {
+  this.body = "Ready to receive requests";
+});
+
+app.use(router.routes());
+```
+
 ## Part 1: Containerized the Monolith
 ### 1.1 Get Setup
-1. Have an AWS Account
-2. Install Docker
-3. Install AWS CLI
-4. Have a Text Editor
+1. Install Docker
+```
+$ docker --version
+Docker version 18.06.1-ce, build e68fc7a
+```
+2. Install AWS CLI
+```
+$ aws --version
+aws-cli/1.16.8 Python/2.7.10 Darwin/16.7.0 botocore/1.11.8
+```
+3. Text Editor
+4. AWS Account
+
+So first, let's verify this application will run on my local machine
+```
+$ cd ~/amazon-ecs-nodejs-microservices/1-no-container
+
+$ ls
+README.md	db.json		index.js	package.json	server.js
+
+$ npm start
+
+```
+
 
 ### 1.2 Download & Open the Project
 Download Code from Github
@@ -13,6 +106,8 @@ Download Code from Github
 $ git clone https://github.com/awslabs/amazon-ecs-nodejs-microservices
 ```
 Open the Project Files using Visual Studio
+
+Run the Monolith locally
 
 ### 1.3 Provision a Repository
 Create the Repository
