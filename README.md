@@ -289,8 +289,54 @@ You can also add a record number at the end of the URL to drill down to a partic
 
 ## Part 3: Break the Monolith
 ### 3.1 Provision the ECR Repositories
+In the previous two steps, you deployed your application as a monolith using a single service and a single container image repository. To deploy the application as three microservices, you will need to provision three repositories (one for each service) in Amazon ECR.
+
+Our three services are:
+- users
+- threads
+- posts
+
+Create the repository:
+
+1. Navigate to the Amazon ECR Console.
+2. Select Create Repository
+3. Repository name:
+- users
+- threads
+- posts
+
+Record the repositories information: [account-id].dkr.ecr.[region].amazonaws.com/[service-name]
+♻ Repeat these steps for each microservice.
+
+You should now have four repositories in Amazon ECR.
+
 ### 3.2 Authenticate Docker with AWS (optional)
+You may skip this step if you recently completed Module 1 of this workshop.
+
+Run aws ecr get-login --no-include-email --region [region]
+Example: aws ecr get-login --no-include-email --region ap-southeast-1
+You are going to get a massive output starting with docker login -u AWS -p ... Copy this entire output, paste, and run it in the terminal.
+
+You should see Login Succeeded
+
 ### 3.3 Build and Push Images for Each Service
+In the project folder amazon-ecs-nodejs-microservices/3-microservices/services, you will have folders with files for each service. Notice how each microservice is essentially a clone of the previous monolithic service.
+
+You can see how each service is now specialized by comparing the file db.json in each service and in the monolithic api service. Previously posts, threads, and users were all stored in a single database file. Now, each is stored in the database file for its respective service.
+
+Open your terminal, and set your path to the 3-microservices/services section of the GitHub code. ~/amazon-ecs-nodejs-microservices/3-microservices/services
+
+Build and Tag Each Image
+
+- In the terminal, run docker build -t [service-name] ./[service-name] Example: docker build -t posts ./posts
+- After the build completes, tag the image so you can push it to the repository: docker tag [service-name]:latest [account-id].dkr.ecr.[region].amazonaws.com/[service-name]:latest example: docker tag posts:latest [account-id].dkr.ecr.ap-southeast-1.amazonaws.com/posts:latest
+- Run docker push to push your image to ECR: docker push [account-id].dkr.ecr.[region].amazonaws.com/[service-name]:latest
+
+If you navigate to your ECR repository, you should see your images tagged with latest. 
+
+♻ Repeat these steps for each microservice image.  
+
+⚐ NOTE: Be sure to build and tag all three images.
 
 ## Part 4: Deploy Microservices
 ### 4.1 Write Task Definitions for your Services
