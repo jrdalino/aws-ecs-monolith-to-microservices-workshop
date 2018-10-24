@@ -158,8 +158,12 @@ docker push [account-id].dkr.ecr.[region].amazonaws.com/api:latest
 docker push 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/api:latest
 ```
 
+Now that my image is stored in the respository, it can be pulled back down wherever i need to run it, including Amazon Elastic Container Service. 
+
 ## Part 2: Deploy the Monolith
 ###  2.1 Launch an ECS Cluster using AWS CloudFormation
+In order to run my my container in ECS, i need a little bit of setup though. I prepared a CloudFormation Template that creates a fresh VPC, a cluster of Docker Hosts and an Application Load Balancer
+
 First, you will create a an Amazon ECS cluster, deployed behind an Application Load Balancer.
 
 1. Navigate to the AWS CloudFormation console.
@@ -204,12 +208,15 @@ Successfully created/updated stack - Nodejs-Microservices
 ### 2.3 Write a Task Definition
 The task definition tells Amazon ECS how to deploy your application containers across the cluster.
 1. Navigate to the 'Task Definitions' menu on the left side of the Amazon ECS console.
-2. Select Create new Task Definition.
+2. Select Create new Task Definition and Select Launch type compatibility = EC2
 3. Task Definition Name = api.
 4. Select Add Container.
-5. Specify the following parameters.
-- If a parameter is not defined, leave it blank or with the default settings: Container name = api image = [account-id].dkr.ecr.[region].amazonaws.com/api:v1 (this is the URL of your ECR repository image from the previous step).
-- Be sure the tag :v1 matches the value you used in module 1 to tag and push the image. Memory = Hard limit: 256 Port mappings = Host port:0, Container port:3000 CPU units = 256
+5. Specify the following parameters. If a parameter is not defined, leave it blank or with the default settings: 
+- Container name = api 
+- Image = 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/api:latest
+- Memory = Hard limit: 256 
+- Port mappings = Host port:0, Container port:3000 
+- CPU units = 256
 6. Select Add.
 7. Select Create.
 8. Your Task Definition will now show up in the console.
