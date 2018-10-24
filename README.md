@@ -187,7 +187,6 @@ First, you will create a an Amazon ECS cluster, deployed behind an Application L
 OR
 
 You can also use the AWS CLI to deploy AWS CloudFormation Stacks. Just add in your region to this code and run in the terminal from the folder amazon-ecs-nodejs-microservices/3-microservices on your computer.
-
 ```
 $ aws cloudformation deploy \
    --template-file infrastructure/ecs.yml \
@@ -340,11 +339,176 @@ If you navigate to your ECR repository, you should see your images tagged with l
 
 ## Part 4: Deploy Microservices
 ### 4.1 Write Task Definitions for your Services
+You will deploy three new microservices onto the same cluster you have running from Module 2. Like in Module 2, you will write Task Definitions for each service.
+
+⚐ **NOTE:** It is possible to add multiple containers to a task definition - so feasibly you could run all three microservices as different containers on a single service. This however, would still be monolithic as every container would need to scale linearly with the service. Your goal is to have three independent services and each service requires its own task definition running a container with the image for that respective service.
+
+You can either these Task Definitions in the console UI, or speed things up by writing them as JSON. To write the task definition as a JSON file, select Configure via JSON at the bottom of the new Task Definition screen.
+
+The parameters for the task definition are:
+
+- Name = [service-name] 
+- Image = [service ECR repo URL]:latest 
+- cpu = 256 
+- memory = 256 
+- Container Port = 3000 
+- Host Post = 0
+
+Or with JSON:
+```json
+{
+    "containerDefinitions": [
+        {
+            "name": "[service-name]",
+            "image": "[account-id].dkr.ecr.ap-southeast-1.amazonaws.com/[service-name]:[tag]",
+            "memoryReservation": "256",
+            "cpu": "256",
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort": "0",
+                    "containerPort": "3000",
+                    "protocol": "tcp"
+                }
+            ]
+        }
+    ],
+    "volumes": [],
+    "networkMode": "bridge",
+    "placementConstraints": [],
+    "family": "[service-name]"
+}
+```
+
+♻ Repeat this process to create a task definition for each service:
+- posts
+- threads
+- users
+
 ### 4.2 Configure the Application Load Balancer: Target Groups
+Like in Module 2, you will be configuring target groups for each of your services. Target groups allow traffic to correctly reach each service.
+
+**Check your VPC Name:** The AWS CloudFormation stack has its own VPC, which is most likely not your default VPC. It is important to configure your Target Groups with the correct VPC.
+
+- Navigate to the Load Balancer section of the EC2 Console.
+- You should see a Load Balancer already exists named demo.
+- Select the checkbox to see the Load Balancer details.
+- Note the value for the VPC attribute on the details page.
+ 
+**Configure the Target Groups**
+
+1. Navigate to the Target Group section of the EC2 Console.
+2. Select Create target group.
+3. Configure the Target Group (do not modify defaults if they are not specified here): 
+- Name = [service-name] 
+- Protocol = HTTP 
+- Port = 80 VPC = select the VPC that matches your Load Balancer from the previous step. 
+Advanced health check settings: 
+- Healthy threshold = 2 
+- Unhealthy threshold = 2 
+- Timeout = 5 
+- Interval = 6
+4. Select Create.
+ 
+♻ Repeat this process to create a target group for each service:
+- posts
+- threads
+- users
+ 
+**Finally, Create a Fourth Target Group**
+- drop-traffic
+
+This target group is a 'dummy' target. You will use it to keep traffic from reaching your monolith after your microservices are fully running. You should have 5 target groups total in your table.
+
 ### 4.3 Configure Listernet Rules
+The listener checks for incoming connection requests to your ALB in order to route traffic appropriately.
+
+Right now, all four of your services (monolith and your three microservices) are running behind the same load balancer. To make the transition from monolith to microservices, you will start routing traffic to your microservices and stop routing traffic to your monolith.
+
+**Open your a listener**
+
+- Navigate to the Load Balancer section of the EC2 Console.
+- You should see a Load Balancer already exists named demo.
+- Select the checkbox to see the Load Balancer details.
+- Select the Listeners tab.
+ 
+**Update Listener Rules**
+
+1. Select View/edit rules > for the listener.
+2. Select the + and insert rule.
+3. The rule criteria are:
+- IF Path = /api/[service-name]* THEN Forward to [service-name]
+- For example: Path = /api/posts* forward to posts
+4. Create four new rules, one to maintain traffic to the monolith, and one for each service. You will have a total of five rules, including the default. Ensure you add your rules in this order:
+- api: /api* forwards to api
+- users: /api/users* forwards to users
+- threads: /api/threads* forwards to threads
+- posts: /api/posts* forwards to posts
+5. Select the back arrow at the top left of the page to return to the load balancer console.
+
 ### 4.4 Deploy your Microservices
+Now, you will deploy your three services onto your cluster. Repeat these steps for each of your three services:
+
+1. Navigate to the 'Clusters' menu on the left side of the Amazon ECS console.
+2.  Select your cluster: BreakTheMonolith-Demo-ECSCluster.
+3.  Under the services tab, select Create.
+4. Configure the service (do not modify any default values) Task definition = select the highest value for X: [service-name]:X (X should = 1 for most cases) Service name = [service-name] Number of tasks = 1
+5.  Select Configure ELB
+- ELB Type = Application Load Balancer
+- For IAM role, select BreakTheMonolith-Demo-ECSServiceRole
+- Select your Load Balancer demo
+- Select Add to ELB
+6. Add your service to the target group:
+- Listener port = 80:HTTP
+- Target group name = select your group: [service-name]
+7. Select Save.
+8. Select Create Service.
+9. Select View Service.
+
+It should only take a few seconds for all your services to start. Double check that all services and tasks are running and healthy before you proceed.
+
 ### 4.5 Switch Over Traffic to your Microservices
+Right now, your microservices are running, but all traffic is still flowing to your monolith service.
+
+**Update Listener Rulers to Re-Route Traffic to the Microservices:**
+
+- Navigate to the Load Balancer section of the EC2 Console
+- Select View/edit rules > for the listener on the demo load balancer.
+- Delete the first rule (/api* forwards to api).
+- Update the default rule to forward to drop-traffic.
+
+**Turn off the Monolith:** Now, traffic is flowing to your microservices and you can spin down the Monolith service.
+
+- Navigate back to your Amazon ECS cluster BreakTheMonolith-Demo-ECSCluster.
+- Select the api service and then Update.
+- Change Number of Tasks to 0.
+- Select Update Service.
+ 
+Amazon ECS will now drain any connections from containers the service has deployed on the cluster then stop the containers. If you refresh the Deployments or Tasks lists after about 30 seconds, you will see that the number of tasks will drop to 0. The service is still active, so if you needed to roll back for any reason, you could simply update it to deploy more tasks.
+
+- Select the api service and then Delete and confirm delete.
+
+**You have now fully transitioned your node.js from the monolith to microservices, without any downtime!**
+
+
 ### 4.5 Validate you Deployment
+
+**Find your service URL:** This is the same URL that you used in Module 2 of this tutorial.
+
+- Navigate to the Load Balancers section of the EC2 Console.
+- Select your load balancer demo-microservices.
+- Copy and paste the value for DNS name into your browser.
+- You should see a message 'Ready to receive requests'.
+ 
+**See the Values for each Microservice:** Your ALB routes traffic based on the request URL. To see each service, simply add the service name to the end of your DNS Name like this:
+
+- http://[DNS name]/api/users
+- http://[DNS name]/api/threads
+- http://[DNS name]/api/posts
+
+⚐ **NOTE:** These URLs perform exactly the same as when the monolith is deployed. This is very important because any APIs or consumers that would expect to connect to this app will not be affected by the changes you made. Going from monolith to microservices required no changes to other parts of your infrastructure.
+
+You can also use tools such as Postman for testing your APIs.
 
 ## Part 5: Clean Up
 ### 5.1 Turn of Services
