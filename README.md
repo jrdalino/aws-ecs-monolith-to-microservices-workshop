@@ -164,22 +164,7 @@ Now that my image is stored in the respository, it can be pulled back down where
 ###  2.1 Launch an ECS Cluster using AWS CloudFormation
 In order to run my my container in ECS, i need a little bit of setup though. I prepared a CloudFormation Template that creates a fresh VPC, a cluster of Docker Hosts and an Application Load Balancer
 
-First, you will create a an Amazon ECS cluster, deployed behind an Application Load Balancer.
-
-1. Navigate to the AWS CloudFormation console.
-2. Select Create Stack.
-3. Select 'Upload a template to Amazon S3' and choose the ecs.yml file from the GitHub project at amazon-ecs-nodejs-microservice/2-containerized/infrastructure/ecs.yml Select Next.
-4. For stack name, enter BreakTheMonolith-Demo. Keep the other parameter values the same:
-- Desired Capacity = 2
-- InstanceType = t2.micro
-- MaxSize = 2
-5. Select Next.
-6. It is not necessary to modify any options on this page. Select Next.
-7. Check the box at the bottom of the next page and select Create. You will see your stack with the orange CREATE_IN_PROGRESS. You can select the refresh button at the top right of the screen to check on the progress. This process typically takes under 5 minutes.
-
-OR
-
-You can also use the AWS CLI to deploy AWS CloudFormation Stacks. Just add in your region to this code and run in the terminal from the folder amazon-ecs-nodejs-microservices/3-microservices on your computer.
+First, you will create a an Amazon ECS cluster, deployed behind an Application Load Balancer. Let's use AWS CLI to deploy AWS CloudFormation Stack. Just add in your region to this code and run in the terminal from the folder amazon-ecs-nodejs-microservices/3-microservices on your computer.
 ```
 $ cd /Users/jrdalino/Projects/amazon-ecs-nodejs-microservices/3-microservices
 ```
