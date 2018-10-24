@@ -1,14 +1,13 @@
 # Break a Monolith Application into Microservices with Amazon Elastic Container Service, Docker, and Amazon EC2
 
 In this demo, I will show you how to use Elastic Container Services to break
-a monolithic application into micro services.
+a monolithic application into microservices.
 
 We will start out by running a monolithic appplication using ECS and then we will deploy new microservices
 side by side with the Monolith and finally we will divert traffic over to our microservices
 with zero downtime.
 
 Let's take a look at our server.js file
-
 ```js
 const app = require('koa')();
 const router = require('koa-router')();
@@ -61,7 +60,7 @@ router.get('/', function *() {
 app.use(router.routes());
 ```
 
-## Part 1: Containerized the Monolith
+## Part 1: Containerize the Monolith
 ### 1.1 Get Setup
 1. Install Docker
 ```
@@ -96,12 +95,14 @@ $ npm start
 > node server.js
 
 Worker started
-
 ```
 To test
 ```
 $ curl localhost:3000/api/users
-
+$ curl localhost:3000/api/users/1
+$ curl localhost:3000/api/threads
+$ curl localhost:3000/api/threads/1
+$ curl localhost:3000/api/posts/by-user/1
 ```
 
 ### 1.3 Provision a Repository
