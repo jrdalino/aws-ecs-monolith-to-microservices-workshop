@@ -3,8 +3,8 @@
 In this demo, I will show you how to use Elastic Container Services to break
 a monolithic application into micro services.
 
-We will start out by running a monolith ECS and then we will deploy new microservices
-side by side with the Monolith and finally we will divert traffic to the microservices
+We will start out by running a monolithic appplication using ECS and then we will deploy new microservices
+side by side with the Monolith and finally we will divert traffic over to our microservices
 with zero downtime.
 
 Let's take a look at our server.js file
