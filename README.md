@@ -88,18 +88,6 @@ aws-cli/1.16.8 Python/2.7.10 Darwin/16.7.0 botocore/1.11.8
 3. Text Editor
 4. AWS Account
 
-So first, let's verify this application will run on my local machine
-```
-$ cd ~/amazon-ecs-nodejs-microservices/1-no-container
-
-$ ls
-README.md	db.json		index.js	package.json	server.js
-
-$ npm start
-
-```
-
-
 ### 1.2 Download & Open the Project
 Download Code from Github
 ```
@@ -108,6 +96,25 @@ $ git clone https://github.com/awslabs/amazon-ecs-nodejs-microservices
 Open the Project Files using Visual Studio
 
 Run the Monolith locally
+
+So first, let's verify this application will run on my local machine
+```
+$ cd ~/amazon-ecs-nodejs-microservices/1-no-container
+$ npm install koa
+$ npm install koa-router
+$ npm start
+
+> @ start /Users/jrdalino/Projects/amazon-ecs-nodejs-microservices/1-no-container
+> node server.js
+
+Worker started
+
+```
+To test
+```
+$ curl localhost:3000/api/users
+
+```
 
 ### 1.3 Provision a Repository
 Create the Repository
