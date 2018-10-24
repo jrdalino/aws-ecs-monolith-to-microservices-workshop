@@ -244,23 +244,28 @@ Add a Listener to the ALB
 6. Click Create.
 
 ### 2.6 Deploy the Monolith as a Service
-Now, you will deploy the monolith as a service onto the cluster.
+Now that the Task Definition has been created, I can launch this Task Definition as a Service. This is basically a way to tell ECS to run one or more copies of this container at all times and connect the running containers to a load balancer.
+
+Let's deploy the monolith as a service onto the cluster.
 
 1. Navigate to the 'Clusters' menu on the left side of the Amazon ECS console.
 2. Select your cluster: BreakTheMonolith-Demo-ECSCluster.
 3. Under the services tab, select Create.
-4. Configure the service (do not modify any default values): Service name = api Number of tasks = 1
-5. Select Configure ELB:
+4. Configure the service (do not modify any default values): 
+- Service name = api 
+- Number of tasks = 2 (I specify how many copies of your container I want to run)
+5. Click on Next Step
+6. Select Configure ELB:
 - ELB Type = Application Load Balancer.
 - For IAM role, select BreakTheMonolith-Demo-ECSServiceRole.
 - Select your Load Balancer ELB name = demo.
 - Select Add to ELB.
-6. Add your service to the target group:
+7. Add your service to the target group:
 - Listener port = 80:HTTP
 - Target group name = select your group: api.
-7. Select Save.
-8. Select Create Service.
-9. Select View Service
+8. Select Save.
+9. Select Create Service.
+10. Select View Service
 
 ### 2.7 Test your Monolith
 Validate your deployment by checking if the service is available from the internet and pinging it.
