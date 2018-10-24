@@ -209,14 +209,14 @@ The task definition tells Amazon ECS how to deploy your application containers a
 ### 2.4 Configure the Application Load Balancer: Target Group
 The Application Load Balancer (ALB) lets your service accept incoming traffic. The ALB automatically routes traffic to container instances running on your cluster using them as a target group.
 
-Check your VPC Name: If this is not your first time using this AWS account, you may have multiple VPCs. It is important to configure your Target Group with the correct VPC.
+**Check your VPC Name:** If this is not your first time using this AWS account, you may have multiple VPCs. It is important to configure your Target Group with the correct VPC.
 
 - Navigate to the Load Balancer section of the EC2 Console.
 - You should see a Load Balancer already exists named demo.
 - Select the checkbox to see the Load Balancer details.
 - Note the value for the VPC attribute on the details page.
 
-Configure the ALB Target Group
+**Configure the ALB Target Group**
 
 1. Navigate to the Target Group section of the EC2 Console.
 2. Select Create target group.
@@ -225,13 +225,17 @@ Configure the ALB Target Group
 - Protocol = HTTP 
 - Port = 80 
 - VPC = select the VPC that matches your Load Balancer from the previous step. This is most likely NOT your default VPC. 
-- Advanced health check settings: Healthy threshold = 2 Unhealthy threshold = 2 Timeout = 5 Interval = 6.
+Advanced health check settings: 
+- Healthy threshold = 2 
+- Unhealthy threshold = 2 
+- Timeout = 5 
+- Interval = 6
 4. Select Create.
 
 ### 2.5 Configure the Application Load Balancer: Listener
 The listener checks for incoming connection requests to your ALB.
 
-Add a Listener to the ALB
+**Add a Listener to the ALB**
 
 1. Navigate to the Load Balancer section of the EC2 Console.
 2. You should see a Load Balancer already exists named demo.
@@ -240,7 +244,7 @@ Add a Listener to the ALB
 5. Select Create Listener:
 - Protocol = HTTP
 - Port = 80
-- Default target group = api
+- Default target group = Forward to: api
 6. Click Create.
 
 ### 2.6 Deploy the Monolith as a Service
@@ -255,14 +259,14 @@ Let's deploy the monolith as a service onto the cluster.
 - Service name = api 
 - Number of tasks = 2 (I specify how many copies of your container I want to run)
 5. Click on Next Step
-6. Select Configure ELB:
-- ELB Type = Application Load Balancer.
+6. Under Load Balancing
+- Load Balancer Type = Application Load Balancer.
 - For IAM role, select BreakTheMonolith-Demo-ECSServiceRole.
-- Select your Load Balancer ELB name = demo.
-- Select Add to ELB.
+- Load Balancer name = demo should already be selected.
+- Select Add to Load Balancer.
 7. Add your service to the target group:
 - Listener port = 80:HTTP
-- Target group name = select your group: api.
+- Target group name = api.
 8. Select Save.
 9. Select Create Service.
 10. Select View Service.
