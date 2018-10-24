@@ -177,11 +177,23 @@ OR
 
 You can also use the AWS CLI to deploy AWS CloudFormation Stacks. Just add in your region to this code and run in the terminal from the folder amazon-ecs-nodejs-microservices/3-microservices on your computer.
 ```
+$ cd /Users/jrdalino/Projects/amazon-ecs-nodejs-microservices/3-microservices
+```
+
+Let's deploy our cloudformation template. Make sure you use the correct region.
+```
 $ aws cloudformation deploy \
    --template-file infrastructure/ecs.yml \
-   --region <region> \
+   --region ap-southeast-1 \
    --stack-name Nodejs-Microservices \
    --capabilities CAPABILITY_NAMED_IAM
+```
+
+Output
+```
+Waiting for changeset to be created..
+Waiting for stack create/update to complete
+Successfully created/updated stack - Nodejs-Microservices
 ```
 
 ### 2.2 Check your Cluster is Running
