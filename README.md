@@ -351,7 +351,7 @@ $ docker push 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/posts:latest
 
 ## Part 4: Deploy Microservices
 ### 4.1 Write Task Definitions for your Services
-You will deploy three new microservices onto the same cluster you have running from Module 2. Like in Module 2, you will write Task Definitions for each service.
+You will deploy three new microservices onto the same cluster you have running from Part 2. Like in Part 2, you will write Task Definitions for each service.
 
 ⚐ **NOTE:** It is possible to add multiple containers to a task definition - so feasibly you could run all three microservices as different containers on a single service. This however, would still be monolithic as every container would need to scale linearly with the service. Your goal is to have three independent services and each service requires its own task definition running a container with the image for that respective service.
 
@@ -359,54 +359,39 @@ You can either these Task Definitions in the console UI, or speed things up by w
 
 The parameters for the task definition are:
 
-- Name = [service-name] 
-- Image = [service ECR repo URL]:latest 
+**users**
+- Task Definition Name = users
+Click on Add container
+- Container Name = users
+- Image = 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/users:latest
 - cpu = 256 
 - memory = 256 
 - Container Port = 3000 
 - Host Post = 0
 
-Or with JSON:
-```json
-{
-    "containerDefinitions": [
-        {
-            "name": "[service-name]",
-            "image": "[account-id].dkr.ecr.ap-southeast-1.amazonaws.com/[service-name]:[tag]",
-            "memoryReservation": "256",
-            "cpu": "256",
-            "essential": true,
-            "portMappings": [
-                {
-                    "hostPort": "0",
-                    "containerPort": "3000",
-                    "protocol": "tcp"
-                }
-            ]
-        }
-    ],
-    "volumes": [],
-    "networkMode": "bridge",
-    "placementConstraints": [],
-    "family": "[service-name]"
-}
-```
+**threads**
+- Task Definition Name = threads 
+Click on Add container
+- Container Name = threads
+- Image = 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/threads:latest
+- cpu = 256 
+- memory = 256 
+- Container Port = 3000 
+- Host Post = 0
 
-♻ Repeat this process to create a task definition for each service:
-- posts
-- threads
-- users
+**posts**
+- Task Definition Name = posts
+Click on Add container
+- Container Name = posts
+- Image = 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/posts:latest
+- cpu = 256 
+- memory = 256 
+- Container Port = 3000 
+- Host Post = 0
 
 ### 4.2 Configure the Application Load Balancer: Target Groups
 Like in Module 2, you will be configuring target groups for each of your services. Target groups allow traffic to correctly reach each service.
 
-**Check your VPC Name:** The AWS CloudFormation stack has its own VPC, which is most likely not your default VPC. It is important to configure your Target Groups with the correct VPC.
-
-- Navigate to the Load Balancer section of the EC2 Console.
-- You should see a Load Balancer already exists named demo.
-- Select the checkbox to see the Load Balancer details.
-- Note the value for the VPC attribute on the details page.
- 
 **Configure the Target Groups**
 
 1. Navigate to the Target Group section of the EC2 Console.
@@ -501,7 +486,6 @@ Amazon ECS will now drain any connections from containers the service has deploy
 - Select the api service and then Delete and confirm delete.
 
 **You have now fully transitioned your node.js from the monolith to microservices, without any downtime!**
-
 
 ### 4.5 Validate you Deployment
 
