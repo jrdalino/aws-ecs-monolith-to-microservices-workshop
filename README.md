@@ -274,30 +274,30 @@ Let's deploy the monolith as a service onto the cluster.
 ### 2.7 Test your Monolith
 Validate your deployment by checking if the service is available from the internet and pinging it.
 
-To Find your Service URL:
+**To Find your Service URL:**
 
 Navigate to the Load Balancers section of the EC2 Console.
 Select your load balancer demo.
 Copy and paste the value for DNS name into your browser.
 You should see a message 'Ready to receive requests'.
 
-See Each Part of the Service: The node.js application routes traffic to each worker based on the URL. To see a worker, simply add the worker name api/[worker-name] to the end of your DNS Name like this:
+**See Each Part of the Service:** The node.js application routes traffic to each worker based on the URL. To see a worker, simply add the worker name api/[worker-name] to the end of your DNS Name like this:
 
-http://[DNS name]/api/users
-http://[DNS name]/api/threads
-http://[DNS name]/api/posts
+- http://[DNS name]/api/users
+- http://[DNS name]/api/threads
+- http://[DNS name]/api/posts
+
 You can also add a record number at the end of the URL to drill down to a particular record. Like this: http://[DNS name]/api/posts/1 or http://[DNS name]/api/users/2
+
+So at this point I have my class-style monolithic application up and running in Elastic Container Service but i'm not done yet. My goal is to take this monolith and split it up into microservices. If we look at the base code for the monolith, you can see the HTTP routes relating to users, threads and posts. A sensible way to split this application up into microservices would be to create three microservices, one for users, one for threads and one for posts.
+
+So what i'm gonna do is i'm going to repeat the steps that I did to deplot the monolithic application but instead I'll build and deploy three different microservices that will run in parallel with the monolith.
 
 ## Part 3: Break the Monolith
 ### 3.1 Provision the ECR Repositories
-In the previous two steps, you deployed your application as a monolith using a single service and a single container image repository. To deploy the application as three microservices, you will need to provision three repositories (one for each service) in Amazon ECR.
+In the previous two steps, you deployed your application as a monolith using a single service and a single container image repository. To deploy the application as three microservices, you will need to provision three repositories (one for each service) in Amazon ECR. Our three services are users, threads and posts.
 
-Our three services are:
-- users
-- threads
-- posts
-
-Create the repository:
+**Create the repository:**
 
 1. Navigate to the Amazon ECR Console.
 2. Select Create Repository
@@ -307,18 +307,15 @@ Create the repository:
 - posts
 
 Record the repositories information: [account-id].dkr.ecr.[region].amazonaws.com/[service-name]
-♻ Repeat these steps for each microservice.
+```
+505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/users
+505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/threads
+505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/posts
+```
 
-You should now have four repositories in Amazon ECR.
+You should now have **four** repositories in Amazon ECR.
 
-### 3.2 Authenticate Docker with AWS (optional)
-You may skip this step if you recently completed Module 1 of this workshop.
-
-Run aws ecr get-login --no-include-email --region [region]
-Example: aws ecr get-login --no-include-email --region ap-southeast-1
-You are going to get a massive output starting with docker login -u AWS -p ... Copy this entire output, paste, and run it in the terminal.
-
-You should see Login Succeeded
+### 3.2 Re-authenticate Docker with AWS if needed
 
 ### 3.3 Build and Push Images for Each Service
 In the project folder amazon-ecs-nodejs-microservices/3-microservices/services, you will have folders with files for each service. Notice how each microservice is essentially a clone of the previous monolithic service.
@@ -327,17 +324,26 @@ You can see how each service is now specialized by comparing the file db.json in
 
 Open your terminal, and set your path to the 3-microservices/services section of the GitHub code. ~/amazon-ecs-nodejs-microservices/3-microservices/services
 
-Build and Tag Each Image
+Build, Tag and Push Each Image
 
-- In the terminal, run docker build -t [service-name] ./[service-name] Example: docker build -t posts ./posts
-- After the build completes, tag the image so you can push it to the repository: docker tag [service-name]:latest [account-id].dkr.ecr.[region].amazonaws.com/[service-name]:latest example: docker tag posts:latest [account-id].dkr.ecr.ap-southeast-1.amazonaws.com/posts:latest
-- Run docker push to push your image to ECR: docker push [account-id].dkr.ecr.[region].amazonaws.com/[service-name]:latest
-
-If you navigate to your ECR repository, you should see your images tagged with latest. 
-
-♻ Repeat these steps for each microservice image.  
-
-⚐ NOTE: Be sure to build and tag all three images.
+users
+```
+$ docker build -t users users/.
+$ docker tag users:latest 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/users:latest
+$ docker push 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/users:latest
+```
+threads
+```
+$ docker build -t threads threads/.
+$ docker tag threads:latest 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/threads:latest
+$ docker push 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/threads:latest
+```
+posts
+```
+$ docker build -t posts posts/.
+$ docker tag posts:latest 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/posts:latest
+$ docker push 505265941169.dkr.ecr.ap-southeast-1.amazonaws.com/posts:latest
+```
 
 ## Part 4: Deploy Microservices
 ### 4.1 Write Task Definitions for your Services
