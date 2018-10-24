@@ -324,6 +324,10 @@ You can see how each service is now specialized by comparing the file db.json in
 
 Open your terminal, and set your path to the 3-microservices/services section of the GitHub code. ~/amazon-ecs-nodejs-microservices/3-microservices/services
 
+```
+$ cd /Users/jrdalino/Projects/amazon-ecs-nodejs-microservices/3-microservices/services
+```
+
 Build, Tag and Push Each Image
 
 users
